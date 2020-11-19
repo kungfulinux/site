@@ -3,9 +3,18 @@ data "aws_vpc" "default" {
 }
 
 data "aws_subnet_ids" "default" {
-  vpc_id = "${data.aws_vpc.default.id}"
+  vpc_id = data.aws_vpc.default.id
 }
 
+variable "source_path" {
+  description = "source path for project"
+  default     = "./"
+}
+
+variable "tag" {
+  description = "tag to use for our new docker image"
+  default     = "latest"
+}
 
 resource "aws_security_group" "lb" {
   name        = "lb-sg"
@@ -151,57 +160,17 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-[
-  {
-    "name": "site",
-    "image": "${aws_ecr_repository}:${tag}",
-    "essential": true,
-    "logConfiguration": {
-      "logDriver": "awslogs",
-      "options": {
-        "awslogs-region": "us-east-1",
-        "awslogs-stream-prefix": "site-development-service",
-        "awslogs-group": "awslogs-site-development"
-      }
-    },
-    "portMappings": [
-      {
-        "containerPort": 4000,
-        "hostPort": 4000,
-        "protocol": "tcp"
-      }
-    ],
-    "cpu": 1,
-    "environment": [
-      {
-        "name": "NODE_ENV",
-        "value": "development"
-      },
-      {
-        "name": "PORT",
-        "value": "4000"
-      }
-    ],
-    "ulimits": [
-      {
-        "name": "nofile",
-        "softLimit": 65536,
-        "hardLimit": 65536
-      }
-    ],
-    "mountPoints": [],
-    "memory": 2048,
-    "volumesFrom": []
-  }
-]
-
 data "template_file" "sproutlyapp" {
-  template = file("./dummyapp.json.tpl")
+  template = file("./site.json.tpl")
   vars = {
     aws_ecr_repository = aws_ecr_repository.repo.repository_url
     tag                = "latest"
     app_port           = 80
   }
+}
+
+resource "aws_ecs_cluster" "development" {
+  name = "tf-ecs-cluster"
 }
 
 resource "aws_ecs_task_definition" "service" {
@@ -262,5 +231,7 @@ resource "null_resource" "push" {
      interpreter = ["bash", "-c"]
   }
 }
+
+
 
 
