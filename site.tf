@@ -8,7 +8,7 @@ data "aws_subnet_ids" "default" {
 
 variable "source_path" {
   description = "source path for project"
-  default     = "./"
+  default     = "."
 }
 
 variable "tag" {
@@ -94,6 +94,9 @@ resource "aws_lb_target_group" "development" {
     path                = "/"
     unhealthy_threshold = "2"
   }
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_ecr_repository" "repo" {
@@ -160,7 +163,7 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-data "template_file" "sproutlyapp" {
+data "template_file" "helloworld" {
   template = file("./site.json.tpl")
   vars = {
     aws_ecr_repository = aws_ecr_repository.repo.repository_url
@@ -180,7 +183,7 @@ resource "aws_ecs_task_definition" "service" {
   cpu                      = 256
   memory                   = 2048
   requires_compatibilities = ["FARGATE"]
-  container_definitions    = data.template_file.sproutlyapp.rendered
+  container_definitions    = data.template_file.helloworld.rendered
   tags = {
     Environment = "development"
     Application = "site"
@@ -202,8 +205,8 @@ resource "aws_ecs_service" "development" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.development.arn
-    container_name   = "sproutlyapi"
-    container_port   = 4000
+    container_name   = "helloworld"
+    container_port   = 3000
   }
 
   depends_on = [aws_lb_listener.https_forward, aws_iam_role_policy_attachment.ecs_task_execution_role]
@@ -227,11 +230,10 @@ resource "aws_cloudwatch_log_group" "site" {
 
 resource "null_resource" "push" {
   provisioner "local-exec" {
-     command     = "${coalesce("push.sh", "${path.module}/push.sh")} ${var.source_path} ${aws_ecr_repository.repo.repository_url} ${var.tag}"
+     command     = "${coalesce("./push.sh", "${path.module}/push.sh")} ${var.source_path} ${aws_ecr_repository.repo.repository_url} ${var.tag}"
      interpreter = ["bash", "-c"]
   }
 }
-
 
 
 
