@@ -19,8 +19,8 @@ image_name="$(echo "$repository_url" | cut -d/ -f2)"
 # builds docker image
 (cd "$source_path" && docker build -t "$image_name" .) 
 
-# login to ecr
-$(aws ecr get-login --no-include-email --region "$region") 
+aws_login=$(aws ecr get-login --region "$region");
+if echo "$aws_login" | grep -q -E '^docker login -u AWS -p \S{1092} -e none https://[0-9]{12}.dkr.ecr.\S+.amazonaws.com$'; then $aws_login; fi
 
 # tag image
 docker tag "$image_name" "$repository_url":"$tag"

@@ -206,7 +206,7 @@ resource "aws_ecs_service" "development" {
   load_balancer {
     target_group_arn = aws_lb_target_group.development.arn
     container_name   = "site"
-    container_port   = 3000
+    container_port   = 4000
   }
 
   depends_on = [aws_lb_listener.https_forward, aws_iam_role_policy_attachment.ecs_task_execution_role]
@@ -225,8 +225,6 @@ resource "aws_cloudwatch_log_group" "site" {
     Application = "site"
   }
 }
-
-// example -> ./push.sh . 123456789012.dkr.ecr.us-west-1.amazonaws.com/hello-world latest
 
 resource "null_resource" "push" {
   provisioner "local-exec" {
