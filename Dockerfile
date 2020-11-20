@@ -9,14 +9,6 @@ COPY ./package.json /src/package.json
 COPY ./package-lock.json /src/package-lock.json
 RUN npm install --silent
 
-# Add application code
-COPY ./app /src/app
-COPY ./bin /src/bin
-COPY ./public /src/public
-
-# Add the nodemon configuration file
-COPY ./nodemon.json /src/nodemon.json
-
 # Set environment to "development" by default
 ENV NODE_ENV development
 
@@ -24,4 +16,4 @@ ENV NODE_ENV development
 EXPOSE 3000
 
 # The command uses nodemon to run the application
-CMD ["node", "node_modules/.bin/nodemon", "-L", "bin/www"]
+CMD ["node index.js" ]
