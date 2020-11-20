@@ -163,7 +163,7 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-data "template_file" "helloworld" {
+data "template_file" "site" {
   template = file("./site.json.tpl")
   vars = {
     aws_ecr_repository = aws_ecr_repository.repo.repository_url
@@ -183,7 +183,7 @@ resource "aws_ecs_task_definition" "service" {
   cpu                      = 256
   memory                   = 2048
   requires_compatibilities = ["FARGATE"]
-  container_definitions    = data.template_file.helloworld.rendered
+  container_definitions    = data.template_file.site.rendered
   tags = {
     Environment = "development"
     Application = "site"
@@ -205,7 +205,7 @@ resource "aws_ecs_service" "development" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.development.arn
-    container_name   = "helloworld"
+    container_name   = "site"
     container_port   = 3000
   }
 
